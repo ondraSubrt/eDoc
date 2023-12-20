@@ -30,23 +30,6 @@ app.listen(port, () => {
 })
 
 
-
-/* const insertToDB = async () => {
-    try {
-        await connectToDB()
-        let result = await usersCollection.insertOne(user)
-        console.log(`Inserted to DB ${JSON.stringify(result)}`);
-    } catch (err){
-        console.error(`Error inserting to the db ${err}`)
-    } finally {
-        await client.close()
-    }
-} */
-
-
-/* connectToDB().catch(console.dir);
-insertToDB() */
-
 // usersCollection.insertMany()
 // usersCollection.find()
 // usersCollection.findOne() - use this One + query operators https://www.mongodb.com/docs/manual/reference/operator/query/
