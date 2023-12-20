@@ -1,0 +1,22 @@
+.btn-radio {
+    width: 3em; /* Set your desired fixed width */
+    margin-right: 5px; /* Add margin for spacing between buttons */
+}
+
+.div-text-wrap {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.toggleable {
+    display: none; /* Initially hide all divs with the class 'toggleable' */
+}
+
+.visible {
+    display: block; /* Show the divs with this class */
+}
+
+.invisible {
+    display: none;
+}

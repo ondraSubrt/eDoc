@@ -1,0 +1,43 @@
+<%- include('../partials/header') %>
+    <body>
+      <div>
+        <H1>Projects</H1> 
+      </div>
+      <div id="project-list">
+
+      </div>  
+          
+      <script>
+        loadData()
+          .then((data) => {
+            if (data.length) {
+              const projectList = document.getElementById('project-list')
+              console.log('Data: ', data);
+              data.forEach((project, index) => {
+                const listedProject = document.createElement('div')
+                listedProject.id = 'project' + index
+                listedProject.innerHTML = `
+                <div class="container">
+                  <div class="card">  
+                    <span>
+                      <a href="/events/${project._id}"">${project.name}</a>
+                    <span>
+                    <br>  
+                    <span>
+                      ${project.description}
+                    <span>  
+                  </div>
+                </div>
+                `
+                projectList.appendChild(listedProject)
+              });  
+            } else {
+              // error
+              console.log('error, data not available');
+            }
+            
+          })    
+      </script>  
+<%- include('../partials/footer') %>
+
+

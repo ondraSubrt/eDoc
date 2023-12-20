@@ -1,0 +1,207 @@
+<%- include('../partials/header') %>
+
+        <H1 id="event"></H1>
+        <div id="event-info">
+            <div class="container pb-2">
+                <h2 id="event-name"></h2>
+            </div>
+            <div class="container">
+                <div class="card border-0">
+                    <div class="row pb-2 text-end">
+                        <div class="col-md-12">
+                            <div class="">
+                                <button data-view="list" class="btn toggleable visible btn-success text-end" onclick="editAll()" id="edit-all"><i class="bi bi-pencil-fill"></i>&nbsp;&nbsp;edit all</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="event-breakdown"></div>
+            <div id="" class="">
+                <div class="container">
+                    <div class="card border-0">
+                        <div class="row pt-2">
+                            <div class="col-md-12">
+                                <div class="col-md-12">
+                                    <button data-view="edit" class="btn toggleable btn-success" id="save-properties-update" onclick="updateAllProperties()">save all changes</button>
+                                </div>
+                                
+                                <div class="col-md-12 py-2">
+                                    <button class="btn btn-primary" id="add-property">add property</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Load Monaco Editor scripts -->
+            <script src="/monaco/min/vs/loader.js"></script>
+            <div id="event-example">
+                <div class="container">
+                    <h2>event example</h2>
+                    <div id="example-event-code" style="height: 500px;"></div>
+                </div>
+            </div>
+            <div id="event-schema">
+                <div class="container">
+                    <h2>event schema</h2>
+                    <div id="example-event-schema" style="height: 1000px;"></div>
+                </div>
+            </div>
+
+        </div>
+        
+        
+        <script>
+            let projectId
+            let eventId = '<%= eventId%>'
+            // cookie either exists or read from url
+            if (eventId) {
+                projectId = JSON.parse(getCookie('projectData'))['projectId']
+                const projectDataCookie = JSON.parse(getCookie('projectData'))
+                projectDataCookie['eventId'] = eventId
+                setCookie('projectData', JSON.stringify(projectDataCookie), 730)
+            } else if (getCookie('projectData') && JSON.parse(getCookie('projectData'))['eventId'] ) {
+                const projectDataCookie = JSON.parse(getCookie('projectData'))
+                projectId = projectDataCookie['projectId']
+                eventId = projectDataCookie['eventId']
+                console.log('cookie exists');
+            } else {
+                console.error('no cookie no eventId passed')
+            }
+        
+            
+            console.log(eventId);
+            loadData()
+                .then((data) => {
+                   console.log(data) 
+                   let projectFound = null
+                   let eventData = null
+                   data.forEach((projectData) => {
+                        console.log(projectData);
+                        if (projectData['_id'] === projectId) {
+                            projectFound = true
+                            const eventsArray = projectData.events
+                            eventsArray.forEach((event) => {
+                                if (event['_id'] === eventId) {
+                                    eventData = event
+                                } 
+                            })
+                            if(!eventData) {
+                                console.log('No event with that ID');
+                            } 
+                        }
+
+                    })
+                    if(!projectFound) {
+                        console.log('No project with that ID');
+                    }
+
+                    const eventStructure = eventData.name ? eventData.name.split('.') : null  
+                    //const eventStructureRequired = [...eventStructure]
+                    //const exampleStructure = [...eventStructure]
+                    const eventSchema = {...eventData.schema}
+                    console.log('eventSchema', eventSchema)
+                    
+                    /* if (eventSchema['event']) {
+                        delete eventSchema.event
+                    } */
+                    
+                    const eventContext = getProperties(eventSchema.properties, [...eventStructure])
+                    console.log('eventContext', eventContext.data, eventContext.type);
+                    
+                    
+                    const eventNameHeading = document.getElementById('event-name')
+                    const dataType = eventContext.type === 'array' ? 'array of objects' : 'object' 
+                    eventNameHeading.innerText = `${eventData.type} : ${eventData.name}: (${dataType})`
+                    
+                    window._evObj = {}
+                    window._evObj.structure = [...eventStructure]
+                    window._evObj.properties = eventContext.data
+                    window._evObj.contextType = eventContext.type
+                    window._evObj.required = getRequired(eventSchema.properties, [...window._evObj.structure])
+                    window._evObj.contextProps = window._evObj.contextType === 'object' ? getExampleContext(window._evObj.properties) : [getExampleContext(window._evObj.properties)] 
+                    window._evObj.contextObj = getExampleEvent([...window._evObj.structure], window._evObj.contextProps)
+                    
+                    console.log('exampleStructure', eventStructure)
+                    console.log('exampleContext', window._evObj.contextProps)
+                    console.log('exampleEvent', window._evObj.contextObj)
+
+                    listProperties(window._evObj.properties, 'event-breakdown')
+                    
+                    document.getElementById('add-property').addEventListener('click', addProperty)
+
+                    let eventNameProperty = {}
+                    if (eventData.type === 'event') {
+                        eventNameProperty = {
+                            event: eventData.name
+                        }
+                    } 
+                    
+                    let example
+                    let schema 
+
+                    require.config({ paths: { 'vs': '/monaco/min/vs' } });
+                    require(['vs/editor/editor.main'], function () {
+                    // Initialize and configure Monaco Editor here
+                        example = monaco.editor.create(document.getElementById('example-event-code'), {
+                            value: JSON.stringify({...eventNameProperty, ..._evObj.contextObj}, null, 4),
+                            language: 'json',
+                            fontSize: 16,
+                            //wordWrap: 'on',
+                            theme: 'vs-dark',
+                            minimap: {
+                                enabled: false, // Set to false to hide the minimap
+                            }
+                        });
+
+                        schema = monaco.editor.create(document.getElementById('example-event-schema'), {
+                            value: JSON.stringify(createSchema(window._evObj, eventData.type), null, 4), // TODO - 'event' should be relacedy by variable which holds the information about structure type (event, global, referrence)
+                            language: 'json',
+                            fontSize: 16,
+                            //wordWrap: 'on',
+                            theme: 'vs-dark',
+                            minimap: {
+                                enabled: false, // Set to false to hide the minimap
+                            }
+                        });
+                    }); 
+
+                })
+                /* 
+                let o = {}
+                document.querySelectorAll("[data-type=property-box]").forEach((property) => {
+                    let name = property.querySelectorAll("[data-export=name]")[0].value
+                    o[name] = {}
+                    property.querySelectorAll("[data-export]").forEach((elem) => {  
+                        switch (elem.dataset.export) {
+                            case 'name': 
+                                break
+                            case 'type':
+                                elem.querySelectorAll('input').forEach((input) => {
+                                    if (input.checked) {
+                                        o[name]['type'] = input.dataset.value
+                                    }
+                                })
+                                if (o[name]['type'] === undefined) {
+                                    o[name]['type'] = 'error'
+                                } 
+                                break
+                            case 'mandatory': 
+                                elem.checked ? o[name]['mandatory'] = true : o[name]['mandatory'] = false
+                                break                   
+                            default: 
+                                o[name][elem.dataset.export] = elem.value
+                                break   
+                        }
+                    }) 
+                    console.log(o)
+                    console.log('-------' + property.id + '--------')
+                })
+                */
+        </script>    
+
+<%- include('../partials/footer') %>

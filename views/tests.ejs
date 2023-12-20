@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Management</title>
+  <style>
+    .user-form {
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div id="userList"></div>
+
+  <script>
+    const users = [
+      { id: 1, name: "John Doe", age: 30, address: "123 Main St", vip: false },
+      { id: 2, name: "Jane Smith", age: 25, address: "456 Oak St", vip: true },
+    ];
+
+    function renderUserList() {
+      const userListDiv = document.getElementById('userList');
+      userListDiv.innerHTML = '';
+
+      users.forEach(user => {
+        const userForm = createUserForm(user);
+        userListDiv.appendChild(userForm);
+      });
+    }
+
+    function createUserForm(user) {
+      const form = document.createElement('form');
+      form.classList.add('user-form');
+
+      const idInput = createInput('hidden', 'id', user.id);
+      form.appendChild(idInput);
+
+      const nameInput = createInput('text', 'name', user.name);
+      form.appendChild(nameInput);
+
+      const ageInput = createInput('number', 'age', user.age);
+      form.appendChild(ageInput);
+
+      const addressInput = createInput('text', 'address', user.address);
+      form.appendChild(addressInput);
+
+      const vipInput = createInput('checkbox', 'vip', user.vip);
+      form.appendChild(vipInput);
+
+      const editButton = document.createElement('button');
+      editButton.textContent = 'Edit';
+      editButton.addEventListener('click', () => makeEditable(form));
+      form.appendChild(editButton);
+
+      const saveButton = document.createElement('button');
+      saveButton.textContent = 'Save';
+      saveButton.style.display = 'none';
+      saveButton.addEventListener('click', () => saveChanges(form));
+      form.appendChild(saveButton);
+
+      return form;
+    }
+
+    function createInput(type, name, value) {
+      const input = document.createElement('input');
+      input.type = type;
+      input.name = name;
+      input.value = value;
+      input.disabled = true;
+      return input;
+    }
+
+    function makeEditable(form) {
+      form.querySelectorAll('input').forEach(input => {
+        input.disabled = !input.disabled;
+      });
+
+      const editButton = form.querySelector('button:nth-of-type(1)');
+      const saveButton = form.querySelector('button:nth-of-type(2)');
+
+      editButton.style.display = 'none';
+      saveButton.style.display = 'inline-block';
+    }
+
+    function saveChanges(form) {
+      const id = form.querySelector('[name="id"]').value;
+      const updatedUser = {
+        id,
+        name: form.querySelector('[name="name"]').value,
+        age: form.querySelector('[name="age"]').value,
+        address: form.querySelector('[name="address"]').value,
+        vip: form.querySelector('[name="vip"]').checked,
+      };
+
+      const index = users.findIndex(user => user.id === parseInt(id, 10));
+      users[index] = updatedUser;
+
+      form.querySelectorAll('input').forEach(input => {
+        input.disabled = true;
+      });
+
+      const editButton = form.querySelector('button:nth-of-type(1)');
+      const saveButton = form.querySelector('button:nth-of-type(2)');
+
+      editButton.style.display = 'inline-block';
+      saveButton.style.display = 'none';
+    }
+
+    renderUserList();
+  </script>
+</body>
+</html>

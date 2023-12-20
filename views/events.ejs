@@ -1,0 +1,64 @@
+<%- include('../partials/header') %>
+    <body>
+        <H1 id="project">Events in project</H1>
+        <div id="events-list"></div>
+
+        <script>
+        let projectId    
+        if (getCookie('projectData') && JSON.parse(getCookie('projectData'))['projectId']) {
+            const projectDataCookie = JSON.parse(getCookie('projectData'))
+            projectId = projectDataCookie['projectId']
+            console.log('pd1: ', projectId);
+        } else {
+            projectId = '<%= projectId %>'
+            const projectDataCookie = getCookie('projectData') ? JSON.parse(getCookie('projectData')): {}
+            projectDataCookie['projectId'] = projectId
+            console.log('pd2: ',projectId);
+            setCookie('projectData', JSON.stringify(projectDataCookie), 730)
+        }
+        
+        console.log(projectId);
+        loadData()
+          .then((data) => {
+            if (data.length) {
+                let eventsArray = []
+                const eventList = document.getElementById('events-list')
+                console.log('Data: ', data);
+                data.forEach((projectData) => {
+                    console.log(projectData);
+                    if (projectData['_id'] === projectId) {
+                        projectFound = true
+                        eventsArray = projectData.events
+                    }
+                })
+                if(!projectFound) {
+                    console.log('No project with that ID');
+                }
+
+                eventsArray.forEach((event, index) => {
+                    const listedEvent = document.createElement('div')
+                    listedEvent.id = 'event' + index
+                    listedEvent.innerHTML = `
+                        <div class="container">
+                            <div class="card">  
+                                <span>
+                                    <a href="/detail/${event._id}"">${event.name}</a>
+                                <span>
+                                <br>  
+                                <span>
+                                    ${event.description}
+                                <span>  
+                            </div>
+                        </div>
+                        </br>
+                    `
+                    eventList.appendChild(listedEvent)    
+                });  
+            } else {
+              // error
+              console.log('error, data not available');
+            }
+            
+          })    
+      </script>  
+<%- include('../partials/footer') %>
